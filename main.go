@@ -10,7 +10,7 @@ import (
 // Structure
 type details struct{
 	Pincode  string		`json:pincode`
-	Ara	 string		`json:area`
+	Area	 string		`json:area`
 	District string 	`json:district`
 	State	 string		`json:state`
 }
