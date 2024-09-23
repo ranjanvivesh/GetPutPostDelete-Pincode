@@ -3,8 +3,8 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
-
 	"github.com/gorilla/mux"
 )
 
@@ -25,8 +25,29 @@ func (c *details) IsEmpty() bool {
 	return c.Pincode == "" && c.Pincode == ""
 }
 
-func main() {
 
+func main() {
+	fmt.Println("PINCODE API")
+	r := mux.NewRouter()
+
+	//seeding the details
+
+	Container = append(Container, details{Pincode: "835219",Area: "Chakla",District: "Ranchi",State: "Jharkhand"})
+	Container = append(Container, details{Pincode: "832001",Area: "Ranchi",District: "Ranchi",State: "Jharkhand"})
+
+	//routing
+
+	r.HandleFunc("/",serveHome).Methods("GET")
+	r.HandleFunc("/pincodes",getAllPincodes).Methods("GET")
+	r.HandleFunc("/pincodes/{pin}",getOnePincode).Methods("GET")
+	r.HandleFunc("/pincodes",createOnePincode).Methods("POST")
+	r.HandleFunc("/pincodes",updateOnePincode).Methods("PUT")
+	r.HandleFunc("/pincodes/{pin}",deleteOnePincode).Methods("DELETE")
+
+	//listening to port
+
+	log.Fatal(http.ListenAndServe(":8000",r))
+	
 }
 
 func serveHome(w http.ResponseWriter, r *http.Request) {
@@ -68,7 +89,49 @@ func createOnePincode(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode("Please Enter Valid Pincode Details")
 	}
 
-	// If the 
+	// If the data send is and empty set i.e. {}
 
+	var Container details
+	_ = json.NewDecoder(r.Body).Decode(&Container)
 
+	if Container.IsEmpty() {
+		json.NewEncoder(w).Encode("Please Enter Valid Pincode Details")
+		return
+	}
+}
+
+func updateOnePincode(w http.ResponseWriter,r *http.Request) {
+	fmt.Println("Get One of the Pincodes")
+	w.Header().Set("Content-type", "application/json")
+
+	params := mux.Vars(r)//get the picode from the request using r
+
+	
+
+	for index,content  := range Container{
+		if content.Pincode == params["pin"] {
+			Container = append(Container[:index], Container[index+1:]...)
+			var content details
+			_ = json.NewDecoder(r.Body).Decode(&content)
+			content.Pincode = params["pin"]
+			Container = append(Container, content)
+			json.NewEncoder(w).Encode(content)
+			return
+		}
+	}
+
+}
+
+func deleteOnePincode(w http.ResponseWriter,r *http.Request) {
+	fmt.Println("Get One of the Pincodes")
+	w.Header().Set("Content-type", "application/json")
+
+	params := mux.Vars(r) //getting the pin
+
+	for index, content := range Container {
+		if content.Pincode == params["id"] { //matching the id
+			Container = append(Container[:index], Container[index+1:]...)
+			break
+		}
+	}
 }
